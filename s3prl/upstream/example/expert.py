@@ -2,10 +2,10 @@ from collections import OrderedDict
 from typing import Dict, List, Union
 
 import torch.nn as nn
-from torch import Tensor
+from torch import Tensor, load, no_grad, zeros_like
 from torch.nn.utils.rnn import pad_sequence
 
-HIDDEN_DIM = 8
+from transformers import Wav2Vec2Config, Wav2Vec2Model
 
 
 class UpstreamExpert(nn.Module):
@@ -33,45 +33,35 @@ class UpstreamExpert(nn.Module):
             "you can just choose one argument (ckpt or model_config) to pass. It's up to you!"
         )
 
-        # The model needs to be a nn.Module for finetuning, not required for representation extraction
-        self.model1 = nn.Linear(1, HIDDEN_DIM)
-        self.model2 = nn.Linear(HIDDEN_DIM, HIDDEN_DIM)
+        config = Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base")
+        self.model = Wav2Vec2Model(config)
+        checkpoint = load(ckpt)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.model.eval()
 
     def get_downsample_rates(self, key: str) -> int:
         """
         Since we do not do any downsampling in this example upstream
         All keys' corresponding representations have downsample rate of 1
         """
-        return 1
+        return 320
 
     def forward(self, wavs: List[Tensor]) -> Dict[str, Union[Tensor, List[Tensor]]]:
         """
         When the returning Dict contains the List with more than one Tensor,
         those Tensors should be in the same shape to train a weighted-sum on them.
         """
+        wavs = [(wave - wave.mean()) / (wave.std() + 1e-7) for wave in wavs]
+        lens = [len(wave) for wave in wavs]
+        wavs = pad_sequence(wavs, batch_first=True)
+        # wavs: (batch_size, max_len)
+        mask = zeros_like(wavs).long()
+        for i, l in enumerate(lens):
+            mask[i, :l] = 1
 
-        wavs = pad_sequence(wavs, batch_first=True).unsqueeze(-1)
-        # wavs: (batch_size, max_len, 1)
+        hidden_states = self.model.forward(wavs, attention_mask=mask, output_hidden_states=True).hidden_states
+        hidden_states = list(hidden_states)  # len: 13, each: (batch_size, max_len, feat_dim)
 
-        hidden = self.model1(wavs)
-        # hidden: (batch_size, max_len, hidden_dim)
-
-        feature = self.model2(hidden)
-        # feature: (batch_size, max_len, hidden_dim)
-
-        # The "hidden_states" key will be used as default in many cases
-        # Others keys in this example are presented for SUPERB Challenge
         return {
-            "hidden_states": [hidden, feature],
-            "PR": [hidden, feature],
-            "ASR": [hidden, feature],
-            "QbE": [hidden, feature],
-            "SID": [hidden, feature],
-            "ASV": [hidden, feature],
-            "SD": [hidden, feature],
-            "ER": [hidden, feature],
-            "SF": [hidden, feature],
-            "SE": [hidden, feature],
-            "SS": [hidden, feature],
-            "secret": [hidden, feature],
+            "hidden_states": hidden_states,
         }
