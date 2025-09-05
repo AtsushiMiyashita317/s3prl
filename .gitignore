@@ -167,3 +167,4 @@ docs/source/_autosummary/
 sample_hidden_states/
 converted_ckpts/
 
+!/bin/*.sh
