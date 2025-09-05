@@ -82,8 +82,11 @@ class SpeakerClassifiDataset(Dataset):
             pair = string.split()
             index = pair[0]
             if int(index) == 2:
-                x = list(self.root.glob("*/wav/" + pair[1]))
-                dataset.append(str(x[0])) 
+                wav_path = self.root / "wav" / pair[1]
+                if wav_path.exists():
+                    dataset.append(str(wav_path))
+                else:
+                    print(f"Not found: {wav_path}")
         print("finish searching dev set wav")
 
         return dataset       
@@ -96,8 +99,11 @@ class SpeakerClassifiDataset(Dataset):
             pair = string.split()
             index = pair[0]
             if int(index) == 3:
-                x = list(self.root.glob("*/wav/" + pair[1]))
-                dataset.append(str(x[0])) 
+                wav_path = self.root / "wav" / pair[1]
+                if wav_path.exists():
+                    dataset.append(str(wav_path))
+                else:
+                    print(f"Not found: {wav_path}")
         print("finish searching test set wav")
 
         return dataset
