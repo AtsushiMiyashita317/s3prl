@@ -1,11 +1,14 @@
 from collections import OrderedDict
 from typing import Dict, List, Union
 
+from duckdb import torch
 import torch.nn as nn
 from torch import Tensor, load, no_grad, zeros_like
 from torch.nn.utils.rnn import pad_sequence
 
 from transformers import Wav2Vec2Config, Wav2Vec2Model
+
+from prior.nn.model.cnn1d import CNN1dKernel
 
 
 class UpstreamExpert(nn.Module):
@@ -39,6 +42,11 @@ class UpstreamExpert(nn.Module):
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.eval()
 
+        prototype = CNN1dKernel(3, 5)
+        prototype.load_state_dict(checkpoint['prototype_state_dict'])
+
+        self.postnet = prototype.export_network(768, 768, 768)
+
     def get_downsample_rates(self, key: str) -> int:
         """
         Since we do not do any downsampling in this example upstream
@@ -59,9 +67,11 @@ class UpstreamExpert(nn.Module):
         for i, l in enumerate(lens):
             mask[i, :l] = 1
 
-        hidden_states = self.model.forward(wavs, attention_mask=mask, output_hidden_states=True).hidden_states
-        hidden_states = list(hidden_states)  # len: 13, each: (batch_size, max_len, feat_dim)
+        with no_grad():
+            hidden_state = self.model.forward(wavs, attention_mask=mask).last_hidden_state
+
+        hidden_state = self.postnet(hidden_state.transpose(-2, -1)).transpose(-2, -1)
 
         return {
-            "hidden_states": hidden_states,
+            "hidden_states": [hidden_state],
         }
