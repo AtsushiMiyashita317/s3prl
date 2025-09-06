@@ -15,5 +15,5 @@ if [ ! -d "${IEMOCAP}" ]; then
 fi
 
 cd s3prl
-python3 run_downstream.py -m train -n ${name}_er -u customized_upstream -d emotion -k ${ckpt} -g ${config} \
+python3 run_downstream.py -m train -n ${name}_er -u customized_upstream -d emotion -k ${ckpt} -g ${config} -f \
     -o "config.downstream_expert.datarc.root='${IEMOCAP}'"

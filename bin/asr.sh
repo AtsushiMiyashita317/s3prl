@@ -27,5 +27,5 @@ cd s3prl
 if [ ! -d "./data/len_for_bucket" ]; then
     python3 preprocess/generate_len_for_bucket.py -i ${LibriSpeech} --n_jobs 16
 fi
-python3 run_downstream.py -m train -n ${name}_asr -u customized_upstream -d asr -k ${ckpt} -g ${config} \
+python3 run_downstream.py -m train -n ${name}_asr -u customized_upstream -d asr -k ${ckpt} -g ${config} -f \
     -o "config.downstream_expert.datarc.libri_root='${LibriSpeech}',,config.downstream_expert.datarc.bucket_file='./data/len_for_bucket'"

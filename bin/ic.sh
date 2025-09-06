@@ -14,5 +14,5 @@ if [ ! -d "${FluentSpeechCommands}" ]; then
 fi
 
 cd s3prl
-python3 run_downstream.py -m train -n ${name}_ic -u customized_upstream -d fluent_commands -k ${ckpt} -g ${config} \
+python3 run_downstream.py -m train -n ${name}_ic -u customized_upstream -d fluent_commands -k ${ckpt} -g ${config} -f \
     -o "config.downstream_expert.datarc.file_path='${FluentSpeechCommands}'"

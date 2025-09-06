@@ -17,6 +17,6 @@ if [ ! -d "${VoxCeleb1}" ]; then
 fi
 
 cd s3prl
-python3 run_downstream.py -m train -n ${name}_sid -u customized_upstream -d voxceleb1 -k ${ckpt} -g ${config} \
+python3 run_downstream.py -m train -n ${name}_sid -u customized_upstream -d voxceleb1 -k ${ckpt} -g ${config} -f \
     -o "config.downstream_expert.datarc.file_path='${VoxCeleb1}'"
     
