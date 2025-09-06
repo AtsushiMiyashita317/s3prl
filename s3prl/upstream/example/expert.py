@@ -1,7 +1,5 @@
-from collections import OrderedDict
 from typing import Dict, List, Union
 
-from duckdb import torch
 import torch.nn as nn
 from torch import Tensor, load, no_grad, zeros_like
 from torch.nn.utils.rnn import pad_sequence
