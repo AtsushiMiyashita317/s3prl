@@ -8,6 +8,8 @@ set -a
 source .env
 set +a
 
+source venv/bin/activate
+
 if [ ! -d "${FluentSpeechCommands}" ]; then
     echo "Please download FluentSpeechCommands dataset from https://www.kaggle.com/datasets/tommyngx/fluent-speech-corpus and extract it to ${FluentSpeechCommands} directory."
     exit 1

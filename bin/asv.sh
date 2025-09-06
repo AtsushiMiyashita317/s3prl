@@ -8,8 +8,6 @@ set -a
 source .env
 set +a
 
-echo "dataset path: ${VoxCeleb1}"
-
 source venv/bin/activate
 
 if [ ! -d "${VoxCeleb1}" ]; then
@@ -19,6 +17,6 @@ if [ ! -d "${VoxCeleb1}" ]; then
 fi
 
 cd s3prl
-python3 run_downstream.py -m train -n ${name}_sid -u customized_upstream -d voxceleb1 -k ${ckpt} -g ${config} -f \
+python3 run_downstream.py -m train -n ${name}_asv -u customized_upstream -d sv_voxceleb1 -k ${ckpt} -g ${config} \
     -o "config.downstream_expert.datarc.file_path='${VoxCeleb1}'"
     

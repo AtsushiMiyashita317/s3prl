@@ -8,6 +8,8 @@ set -a
 source .env
 set +a
 
+source venv/bin/activate
+
 if [ ! -d "${IEMOCAP}" ]; then
     echo "Please request access to IEMOCAP dataset from https://sail.usc.edu/iemocap/"
     echo "and place it in the path specified by the IEMOCAP variable in .env"
