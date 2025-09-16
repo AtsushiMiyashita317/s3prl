@@ -102,7 +102,7 @@ class UpstreamExpert(nn.Module):
         """
         
         device = wavs_list[0].device
-        wavs_list = [wave.to("cpu") for wave in wavs_list]
+        wavs_list = [wave.squeeze().to("cpu") for wave in wavs_list]
 
         hidden_states = []
         with no_grad():
