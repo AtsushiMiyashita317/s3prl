@@ -119,7 +119,7 @@ class DownstreamExpert(nn.Module):
             start_index = end_index
 
         predicted_intent = torch.stack(predicted_intent, dim=1)
-        records['acc'] += (predicted_intent == labels).prod(1).view(-1).cpu().float().tolist()
+        records['acc'] += predicted_intent.eq(labels).float().prod(1).view(-1).cpu().tolist()
         records['intent_loss'].append(intent_loss.item())
 
         def idx2slots(indices: torch.Tensor):
