@@ -117,11 +117,12 @@ class UpstreamExpert(nn.Module):
                 (self.wavlm, self.wavlm_processor),
             ]:
                 outputs = model(wavs, attention_mask=mask, output_hidden_states=True)
-                hidden_states.extend(outputs.hidden_states[[6,9,11]])
+                hidden_states.extend([outputs.hidden_states[6], outputs.hidden_states[9], outputs.hidden_states[11]])
 
             whisper_inputs = self.whisper_processor(wavs_list, return_tensors="pt", sampling_rate=16000, padding=True)
-            whisper_outputs = self.whisper(**whisper_inputs, output_hidden_states=True)
-            hidden_states.extend(whisper_outputs.encoder_hidden_states[[6,9,11]])
+            encoder = self.whisper.get_encoder()
+            enc_out = encoder(**whisper_inputs, output_hidden_states=True)
+            hidden_states.extend([enc_out.hidden_states[6], enc_out.hidden_states[9], enc_out.hidden_states[11]])
 
         acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
         with no_grad():
