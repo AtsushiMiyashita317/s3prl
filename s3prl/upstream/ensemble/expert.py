@@ -100,13 +100,16 @@ class UpstreamExpert(nn.Module):
         When the returning Dict contains the List with more than one Tensor,
         those Tensors should be in the same shape to train a weighted-sum on them.
         """
-        
         device = wavs_list[0].device
-        for wave in wavs_list:
-            print(wave.shape)
+        
+        acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
+        with no_grad():
+            xvector_inputs = self.xvector_processor(wavs_list, device)
+            _ = self.xvector.encode_batch(**xvector_inputs)
+        for h in handles: h.remove()
+        hidden_states.extend([act[::2] for act in acts])
+
         wavs_list = [wave.cpu().numpy() for wave in wavs_list]
-        for wave in wavs_list:
-            print(wave.shape)
         
         hidden_states = []
         with no_grad():
@@ -117,20 +120,12 @@ class UpstreamExpert(nn.Module):
                 (self.whisper, self.whisper_processor),
             ]:
                 inputs = processor(wavs_list, return_tensors="pt", return_attention_mask=True)
-                for k, v in inputs.items():
-                    print(f"{k}: {v.shape}")
                 inputs = {k: v.to(device) for k, v in inputs.items()}
                 outputs = model(**inputs, output_hidden_states=True)
                 hidden_states.extend([outputs.hidden_states[6], outputs.hidden_states[9], outputs.hidden_states[11]])
 
-        acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
-        with no_grad():
-            xvector_inputs = self.xvector_processor(wavs_list, device)
-            _ = self.xvector.encode_batch(**xvector_inputs)
-        for h in handles: h.remove()
-        hidden_states.extend([act[::2] for act in acts])
 
-        ssl_len = hidden_states[0].size(1)
+        ssl_len = hidden_states[4].size(1)
 
         hidden_states = [state[:, :ssl_len] for state in hidden_states]
 
