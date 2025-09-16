@@ -113,13 +113,13 @@ class UpstreamExpert(nn.Module):
         wavs_list = [wave.cpu().numpy() for wave in wavs_list]
         
         with no_grad():
-            for model, processor in [
-                (self.wav2vec, self.wav2vec_processor),
-                (self.hubert, self.hubert_processor),
-                (self.wavlm, self.wavlm_processor),
-                (self.whisper, self.whisper_processor),
+            for model, processor, padding in [
+                (self.wav2vec, self.wav2vec_processor, True),
+                (self.hubert, self.hubert_processor, True),
+                (self.wavlm, self.wavlm_processor, True),
+                (self.whisper, self.whisper_processor, "max_length"),
             ]:
-                inputs = processor(wavs_list, return_tensors="pt", return_attention_mask=True)
+                inputs = processor(wavs_list, return_tensors="pt", return_attention_mask=True, padding=padding, sampling_rate=16000)
                 inputs = {k: v.to(device) for k, v in inputs.items()}
                 outputs = model(**inputs, output_hidden_states=True)
                 hidden_states.extend([outputs.hidden_states[6], outputs.hidden_states[9], outputs.hidden_states[11]])
