@@ -102,8 +102,12 @@ class UpstreamExpert(nn.Module):
         """
         
         device = wavs_list[0].device
+        for wave in wavs_list:
+            print(wave.shape)
         wavs_list = [wave.squeeze().to("cpu") for wave in wavs_list]
-
+        for wave in wavs_list:
+            print(wave.shape)
+        
         hidden_states = []
         with no_grad():
             for model, processor in [
@@ -113,6 +117,8 @@ class UpstreamExpert(nn.Module):
                 (self.whisper, self.whisper_processor),
             ]:
                 inputs = processor(wavs_list, return_tensors="pt", sampling_rate=16000, padding=True, return_attention_mask=True)
+                for k, v in inputs.items():
+                    print(f"{k}: {v.shape}")
                 inputs = {k: v.to(device) for k, v in inputs.items()}
                 outputs = model(**inputs, output_hidden_states=True)
                 hidden_states.extend([outputs.hidden_states[6], outputs.hidden_states[9], outputs.hidden_states[11]])
