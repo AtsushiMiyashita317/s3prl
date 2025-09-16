@@ -79,13 +79,12 @@ class UpstreamExpert(nn.Module):
         self.xvector.eval()
 
     @staticmethod
-    def xvector_processor(wavs_list, device):
+    def xvector_processor(wavs_list):
         wav_lens = tensor([len(wave) for wave in wavs_list])
         wavs_tensor = pad_sequence(wavs_list, batch_first=True)
         return {
-            "wavs": wavs_tensor.to(device),
-            "wav_lens": wav_lens.to(device),
-            "normalize": True
+            "wavs": wavs_tensor,
+            "wav_lens": wav_lens,
         }
 
     def get_downsample_rates(self, key: str) -> int:
@@ -104,8 +103,9 @@ class UpstreamExpert(nn.Module):
         
         acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
         with no_grad():
-            xvector_inputs = self.xvector_processor(wavs_list, device)
-            _ = self.xvector.encode_batch(**xvector_inputs)
+            xvector_inputs = self.xvector_processor(wavs_list)
+            xvector_inputs = {k: v.to(device) for k, v in xvector_inputs.items()}
+            _ = self.xvector.encode_batch(**xvector_inputs, normalize=True)
         for h in handles: h.remove()
         hidden_states.extend([act[::2] for act in acts])
 
