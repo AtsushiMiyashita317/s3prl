@@ -116,7 +116,7 @@ class UpstreamExpert(nn.Module):
                 (self.wavlm, self.wavlm_processor),
                 (self.whisper, self.whisper_processor),
             ]:
-                inputs = processor(wavs_list, return_tensors="pt", sampling_rate=16000, padding=True, return_attention_mask=True)
+                inputs = processor(wavs_list, return_tensors="pt", return_attention_mask=True)
                 for k, v in inputs.items():
                     print(f"{k}: {v.shape}")
                 inputs = {k: v.to(device) for k, v in inputs.items()}
