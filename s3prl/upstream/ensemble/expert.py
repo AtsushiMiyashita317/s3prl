@@ -101,7 +101,7 @@ class UpstreamExpert(nn.Module):
         those Tensors should be in the same shape to train a weighted-sum on them.
         """
         
-        wavs = [(wave - wave.mean()) / (wave.std() + 1e-7) for wave in wavs]
+        wavs = [(wave - wave.mean()) / (wave.std() + 1e-7) for wave in wavs_list]
         lens = [len(wave) for wave in wavs]
         wavs = pad_sequence(wavs, batch_first=True)
         # wavs: (batch_size, max_len)
