@@ -70,10 +70,10 @@ class UpstreamExpert(nn.Module):
         self.wavlm.eval()
         self.wavlm_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
-        config = WhisperConfig.from_pretrained("openai/whisper-small")
-        self.whisper = WhisperModel(config).get_encoder()
-        self.whisper.eval()
-        self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-small")
+        # config = WhisperConfig.from_pretrained("openai/whisper-small")
+        # self.whisper = WhisperModel(config).get_encoder()
+        # self.whisper.eval()
+        # self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-small")
 
         # self.xvector = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", run_opts={"device": "cuda"})
         # self.xvector.eval()
@@ -117,16 +117,11 @@ class UpstreamExpert(nn.Module):
                 (self.wav2vec, self.wav2vec_processor, True),
                 (self.hubert, self.hubert_processor, True),
                 (self.wavlm, self.wavlm_processor, True),
-                (self.whisper, self.whisper_processor, "max_length"),
             ]:
                 inputs = processor(wavs_list, return_tensors="pt", return_attention_mask=True, padding=padding, sampling_rate=16000)
                 inputs = {k: v.to(device) for k, v in inputs.items()}
                 outputs = model(**inputs, output_hidden_states=True)
                 hidden_states.extend([outputs.hidden_states[6], outputs.hidden_states[9], outputs.hidden_states[11]])
 
-
-        ssl_len = hidden_states[4].size(1)
-
-        hidden_states = [state[:, :ssl_len] for state in hidden_states]
 
         return {"hidden_states": hidden_states}
