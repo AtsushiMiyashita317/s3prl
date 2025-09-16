@@ -1,7 +1,7 @@
 from typing import Dict, List, Union
 
 import torch.nn as nn
-from torch import Tensor, no_grad, tensor, zeros_like
+from torch import Tensor, no_grad, tensor
 from torch.nn.utils.rnn import pad_sequence
 
 from transformers import (
@@ -75,17 +75,17 @@ class UpstreamExpert(nn.Module):
         self.whisper.eval()
         self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-small")
 
-        self.xvector = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb")
-        self.xvector.eval()
+        # self.xvector = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb", run_opts={"device": "cuda"})
+        # self.xvector.eval()
 
-    @staticmethod
-    def xvector_processor(wavs_list):
-        wav_lens = tensor([len(wave) for wave in wavs_list])
-        wavs_tensor = pad_sequence(wavs_list, batch_first=True)
-        return {
-            "wavs": wavs_tensor,
-            "wav_lens": wav_lens,
-        }
+    # @staticmethod
+    # def xvector_processor(wavs_list):
+    #     wav_lens = tensor([len(wave) for wave in wavs_list])
+    #     wavs_tensor = pad_sequence(wavs_list, batch_first=True)
+    #     return {
+    #         "wavs": wavs_tensor,
+    #         "wav_lens": wav_lens,
+    #     }
 
     def get_downsample_rates(self, key: str) -> int:
         """
@@ -100,18 +100,18 @@ class UpstreamExpert(nn.Module):
         those Tensors should be in the same shape to train a weighted-sum on them.
         """
         device = wavs_list[0].device
+        hidden_states = []
         
-        acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
-        with no_grad():
-            xvector_inputs = self.xvector_processor(wavs_list)
-            xvector_inputs = {k: v.to(device) for k, v in xvector_inputs.items()}
-            _ = self.xvector.encode_batch(**xvector_inputs, normalize=True)
-        for h in handles: h.remove()
-        hidden_states.extend([act[::2] for act in acts])
+        # acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
+        # with no_grad():
+        #     xvector_inputs = self.xvector_processor(wavs_list)
+        #     xvector_inputs = {k: v.to(device) for k, v in xvector_inputs.items()}
+        #     _ = self.xvector.encode_batch(**xvector_inputs, normalize=True)
+        # for h in handles: h.remove()
+        # hidden_states.extend([act[::2] for act in acts])
 
         wavs_list = [wave.cpu().numpy() for wave in wavs_list]
         
-        hidden_states = []
         with no_grad():
             for model, processor in [
                 (self.wav2vec, self.wav2vec_processor),
