@@ -5,11 +5,10 @@ from torch import Tensor, no_grad, tensor
 from torch.nn.utils.rnn import pad_sequence
 
 from transformers import (
-    Wav2Vec2Config, Wav2Vec2Model,
+    Wav2Vec2Config, Wav2Vec2Model, Wav2Vec2Processor,
     HubertConfig, HubertModel,
-    WavLMConfig, WavLMModel,
-    WhisperConfig, WhisperModel,
-    AutoProcessor
+    WavLMConfig, WavLMModel, 
+    WhisperConfig, WhisperModel, WhisperProcessor,
 )
 from speechbrain.inference.classifiers import EncoderClassifier
 
@@ -59,22 +58,22 @@ class UpstreamExpert(nn.Module):
         config = Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base")
         self.wav2vec = Wav2Vec2Model(config)
         self.wav2vec.eval()
-        self.wav2vec_processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
+        self.wav2vec_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
         config = HubertConfig.from_pretrained("facebook/hubert-base-ls960")
         self.hubert = HubertModel(config)
         self.hubert.eval()
-        self.hubert_processor = AutoProcessor.from_pretrained("facebook/hubert-base-ls960")
+        self.hubert_processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-base-ls960")
 
         config = WavLMConfig.from_pretrained("microsoft/wavlm-base")
         self.wavlm = WavLMModel(config)
         self.wavlm.eval()
-        self.wavlm_processor = AutoProcessor.from_pretrained("microsoft/wavlm-base")
+        self.wavlm_processor = Wav2Vec2Processor.from_pretrained("microsoft/wavlm-base")
 
         config = WhisperConfig.from_pretrained("openai/whisper-small")
         self.whisper = WhisperModel(config)
         self.whisper.eval()
-        self.whisper_processor = AutoProcessor.from_pretrained("openai/whisper-small")
+        self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-small")
 
         self.xvector = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
         self.xvector.eval()
