@@ -75,7 +75,7 @@ class UpstreamExpert(nn.Module):
         self.whisper.eval()
         self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-small")
 
-        self.xvector = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
+        self.xvector = EncoderClassifier.from_hparams(source="speechbrain/spkrec-xvect-voxceleb")
         self.xvector.eval()
 
     @staticmethod
