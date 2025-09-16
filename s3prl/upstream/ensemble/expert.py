@@ -1,7 +1,7 @@
 from typing import Dict, List, Union
 
 import torch.nn as nn
-from torch import Tensor, no_grad, tensor
+from torch import Tensor, no_grad, tensor, zeros_like
 from torch.nn.utils.rnn import pad_sequence
 
 from transformers import (
@@ -100,6 +100,14 @@ class UpstreamExpert(nn.Module):
         When the returning Dict contains the List with more than one Tensor,
         those Tensors should be in the same shape to train a weighted-sum on them.
         """
+        
+        wavs = [(wave - wave.mean()) / (wave.std() + 1e-7) for wave in wavs]
+        lens = [len(wave) for wave in wavs]
+        wavs = pad_sequence(wavs, batch_first=True)
+        # wavs: (batch_size, max_len)
+        mask = zeros_like(wavs).long()
+        for i, l in enumerate(lens):
+            mask[i, :l] = 1
 
         hidden_states = []
         with no_grad():
@@ -107,11 +115,13 @@ class UpstreamExpert(nn.Module):
                 (self.wav2vec, self.wav2vec_processor),
                 (self.hubert, self.hubert_processor),
                 (self.wavlm, self.wavlm_processor),
-                (self.whisper, self.whisper_processor),
             ]:
-                inputs = processor(wavs_list, sampling_rate=16000, return_tensors="pt", padding=True)
-                outputs = model(**inputs, output_hidden_states=True)
+                outputs = model(wavs, attention_mask=mask, output_hidden_states=True)
                 hidden_states.extend(outputs.hidden_states[[6,9,11]])
+
+            whisper_inputs = self.whisper_processor(wavs_list, return_tensors="pt", sampling_rate=16000, padding=True)
+            whisper_outputs = self.whisper(**whisper_inputs, output_hidden_states=True)
+            hidden_states.extend(whisper_outputs.encoder_hidden_states[[6,9,11]])
 
         acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
         with no_grad():
