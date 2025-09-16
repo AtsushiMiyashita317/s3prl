@@ -104,7 +104,7 @@ class UpstreamExpert(nn.Module):
         device = wavs_list[0].device
         for wave in wavs_list:
             print(wave.shape)
-        wavs_list = [wave.squeeze().to("cpu") for wave in wavs_list]
+        wavs_list = [wave.cpu().numpy() for wave in wavs_list]
         for wave in wavs_list:
             print(wave.shape)
         
