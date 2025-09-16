@@ -71,7 +71,7 @@ class UpstreamExpert(nn.Module):
         self.wavlm_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
         config = WhisperConfig.from_pretrained("openai/whisper-small")
-        self.whisper = WhisperModel(config)
+        self.whisper = WhisperModel(config).get_encoder()
         self.whisper.eval()
         self.whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-small")
 
@@ -79,12 +79,12 @@ class UpstreamExpert(nn.Module):
         self.xvector.eval()
 
     @staticmethod
-    def xvector_processor(wavs_list):
+    def xvector_processor(wavs_list, device):
         wav_lens = tensor([len(wave) for wave in wavs_list])
         wavs_tensor = pad_sequence(wavs_list, batch_first=True)
         return {
-            "wavs": wavs_tensor,
-            "wav_lens": wav_lens,
+            "wavs": wavs_tensor.to(device),
+            "wav_lens": wav_lens.to(device),
             "normalize": True
         }
 
@@ -101,13 +101,8 @@ class UpstreamExpert(nn.Module):
         those Tensors should be in the same shape to train a weighted-sum on them.
         """
         
-        wavs = [(wave - wave.mean()) / (wave.std() + 1e-7) for wave in wavs_list]
-        lens = [len(wave) for wave in wavs]
-        wavs = pad_sequence(wavs, batch_first=True)
-        # wavs: (batch_size, max_len)
-        mask = zeros_like(wavs).long()
-        for i, l in enumerate(lens):
-            mask[i, :l] = 1
+        device = wavs_list[0].device
+        wavs_list = [wave.to("cpu") for wave in wavs_list]
 
         hidden_states = []
         with no_grad():
@@ -115,18 +110,16 @@ class UpstreamExpert(nn.Module):
                 (self.wav2vec, self.wav2vec_processor),
                 (self.hubert, self.hubert_processor),
                 (self.wavlm, self.wavlm_processor),
+                (self.whisper, self.whisper_processor),
             ]:
-                outputs = model(wavs, attention_mask=mask, output_hidden_states=True)
+                inputs = processor(wavs_list, return_tensors="pt", sampling_rate=16000, padding=True)
+                inputs = {k: v.to(device) for k, v in inputs.items()}
+                outputs = model(**inputs, output_hidden_states=True)
                 hidden_states.extend([outputs.hidden_states[6], outputs.hidden_states[9], outputs.hidden_states[11]])
-
-            whisper_inputs = self.whisper_processor(wavs_list, return_tensors="pt", sampling_rate=16000, padding=True)
-            encoder = self.whisper.get_encoder()
-            enc_out = encoder(**whisper_inputs, output_hidden_states=True)
-            hidden_states.extend([enc_out.hidden_states[6], enc_out.hidden_states[9], enc_out.hidden_states[11]])
 
         acts, handles = attach_xvector_hooks(self.xvector, layer_ids=[1,2,3])
         with no_grad():
-            xvector_inputs = self.xvector_processor(wavs_list)
+            xvector_inputs = self.xvector_processor(wavs_list, device)
             _ = self.xvector.encode_batch(**xvector_inputs)
         for h in handles: h.remove()
         hidden_states.extend([act[::2] for act in acts])
