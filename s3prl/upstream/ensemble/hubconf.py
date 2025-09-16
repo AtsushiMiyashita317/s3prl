@@ -1,7 +1,7 @@
 from .expert import UpstreamExpert as _UpstreamExpert
 
 
-def customized_upstream(*args, **kwargs):
+def ensemble(*args, **kwargs):
     """
     To enable your customized pretrained model, you only need to implement
     upstream/example/expert.py and leave this file as is. This file is
