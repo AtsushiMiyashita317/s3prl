@@ -63,12 +63,12 @@ class UpstreamExpert(nn.Module):
         config = HubertConfig.from_pretrained("facebook/hubert-base-ls960")
         self.hubert = HubertModel(config)
         self.hubert.eval()
-        self.hubert_processor = Wav2Vec2Processor.from_pretrained("facebook/hubert-base-ls960")
+        self.hubert_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
         config = WavLMConfig.from_pretrained("microsoft/wavlm-base")
         self.wavlm = WavLMModel(config)
         self.wavlm.eval()
-        self.wavlm_processor = Wav2Vec2Processor.from_pretrained("microsoft/wavlm-base")
+        self.wavlm_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
         config = WhisperConfig.from_pretrained("openai/whisper-small")
         self.whisper = WhisperModel(config)
