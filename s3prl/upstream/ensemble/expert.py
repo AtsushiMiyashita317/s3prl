@@ -55,18 +55,15 @@ class UpstreamExpert(nn.Module):
             "you can just choose one argument (ckpt or model_config) to pass. It's up to you!"
         )
 
-        config = Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base")
-        self.wav2vec = Wav2Vec2Model(config)
+        self.wav2vec = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base")
         self.wav2vec.eval()
         self.wav2vec_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
-        config = HubertConfig.from_pretrained("facebook/hubert-base-ls960")
-        self.hubert = HubertModel(config)
+        self.hubert = HubertModel.from_pretrained("facebook/hubert-base-ls960")
         self.hubert.eval()
         self.hubert_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
-        config = WavLMConfig.from_pretrained("microsoft/wavlm-base")
-        self.wavlm = WavLMModel(config)
+        self.wavlm = WavLMModel.from_pretrained("microsoft/wavlm-base")
         self.wavlm.eval()
         self.wavlm_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base")
 
